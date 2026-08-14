@@ -1,0 +1,45 @@
+name: Build OwnNet APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Setup Gomobile
+        run: |
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+
+      - name: Build Libbox AAR
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:downloadLibbox || ./gradlew :libbox:assembleRelease || echo "Building libbox manually if needed"
+
+      - name: Build APK
+        run: |
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OwnNet-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+          

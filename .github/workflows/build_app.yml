@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -23,15 +23,13 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Setup Gomobile
-        run: |
-          go install golang.org/x/mobile/cmd/gomobile@latest
-          gomobile init
-
       - name: Build Libbox AAR
         run: |
-          chmod +x ./gradlew
-          ./gradlew :app:downloadLibbox || ./gradlew :libbox:assembleRelease || echo "Building libbox manually if needed"
+          chmod +x gradlew
+          ./gradlew :libbox:assembleRelease || ./gradlew :libbox:bind || ./gradlew :app:downloadLibbox || true
+          mkdir -p app/libs
+          cp -r libbox/build/outputs/aar/* app/libs/ 2>/dev/null || true
+          ls -la app/libs/
 
       - name: Build APK
         run: |

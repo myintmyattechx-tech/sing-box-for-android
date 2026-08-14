@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -28,13 +28,20 @@ jobs:
           go install golang.org/x/mobile/cmd/gomobile@latest
           gomobile init
 
-      - name: Build Libbox AAR
+      - name: Build Libbox (Go Core)
         run: |
-          chmod +x ./gradlew
-          ./gradlew :app:downloadLibbox || ./gradlew :libbox:assembleRelease || echo "Building libbox manually if needed"
+          mkdir -p app/libs
+          if [ -d "libbox" ]; then
+            cd libbox
+            gomobile bind -v -target=android -androidapi 21 -o ../app/libs/libbox.aar .
+            cd ..
+          else
+            ./gradlew :app:downloadLibbox || true
+          fi
 
       - name: Build APK
         run: |
+          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
@@ -42,4 +49,4 @@ jobs:
         with:
           name: OwnNet-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-          
+
